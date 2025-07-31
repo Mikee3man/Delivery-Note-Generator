@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#26B6A5">
+    <title>Delivery Note Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <!-- Include QR Scanner library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Include jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        // Check if jsPDF is loaded correctly
+        window.addEventListener('load', function() {
+            console.log('Window loaded, checking jsPDF');
+            console.log('jspdf object:', window.jspdf);
+            if (!window.jspdf) {
+                console.error('jsPDF not loaded correctly!');
+            } else {
+                console.log('jsPDF loaded successfully!');
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.svg" alt="Reproplast Logo" class="logo">
+            <h1>Delivery Note Generator</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="scan">Scan QR</button>
+            <button class="tab-btn" data-tab="manual">Manual Entry</button>
+            <button class="tab-btn" data-tab="list">View List</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- QR Scanner Tab -->
+            <div id="scan" class="tab-pane active">
+                <div id="reader"></div>
+                <div id="scan-result" class="scan-result"></div>
+                <button id="start-scanner" class="btn">Start Scanner</button>
+            </div>
+
+            <!-- Manual Entry Tab -->
+            <div id="manual" class="tab-pane">
+                <form id="manual-entry-form">
+                    <div class="form-group">
+                        <label for="supplier">Supplier</label>
+                        <input type="text" id="supplier" name="supplier" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockCode">Stock Code</label>
+                        <input type="text" id="stockCode" name="stockCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mass">Mass (kg)</label>
+                        <input type="number" id="mass" name="mass" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <input type="text" id="type" name="type" required>
+                    </div>
+                    <button type="submit" class="btn">Add Entry</button>
+                </form>
+            </div>
+
+            <!-- View List Tab -->
+            <div id="list" class="tab-pane">
+                <div class="delivery-info">
+                    <div class="form-group">
+                        <label for="from">From</label>
+                        <select id="from" name="from">
+                            <option value="EPR yard" selected>EPR yard</option>
+                            <option value="Repro yard">Repro yard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="to">To</label>
+                        <select id="to" name="to">
+                            <option value="EPR yard">EPR yard</option>
+                            <option value="Repro yard" selected>Repro yard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dispatcher">Dispatcher Name</label>
+                        <input type="text" id="dispatcher" name="dispatcher" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="receiver">Receiver Name</label>
+                        <input type="text" id="receiver" name="receiver" required>
+                    </div>
+                </div>
+
+                <h3>Items List</h3>
+                <div class="table-container">
+                    <table id="items-table">
+                        <thead>
+                            <tr>
+                                <th>Supplier</th>
+                                <th>Stock Code</th>
+                                <th>Mass (kg)</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Items will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="total-mass">
+                    <p>Total Mass: <span id="total-mass">0</span> kgs</p>
+                </div>
+
+                <button id="generate-pdf" class="btn primary-btn">Generate Delivery Note</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <!-- Register Service Worker for PWA functionality -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
