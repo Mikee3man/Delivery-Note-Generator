@@ -349,31 +349,24 @@ function generateDeliveryNotePDF(dispatcher, receiver, from, to) {
     const dateString = `${day}-${month}-${year}`;
     const timeString = today.toLocaleTimeString('en-US', { hour12: false }).replace(/:/g, '-');
     
-    // Add logo with proper styling
-    doc.setFontSize(28);
-    // RE in teal color
-    doc.setTextColor(38, 182, 165); // #26B6A5 teal color
-    doc.text("RE", 75, 20, { align: "right" });
-    // PROPLAST in black
-    doc.setTextColor(0, 0, 0);
-    doc.text("PROPLAST", 77, 20, { align: "left" });
+    // Logo removed as requested
     
-    // Continue with the rest of the PDF generation
-    // Add title
+    // Continue with the PDF generation
+    // Add title - moved up since logo was removed
     doc.setFontSize(18);
     doc.setTextColor(0, 0, 0);
-    doc.text("Delivery Note", 105, 30, { align: "center" });
+    doc.text("Delivery Note", 105, 20, { align: "center" });
     
     // Add date and time
     doc.setFontSize(10);
     const formattedDate = formatDate(today.toISOString());
     const formattedTime = today.toLocaleTimeString();
-    doc.text(`Date: ${formattedDate} Time: ${formattedTime}`, 105, 40, { align: "center" });
+    doc.text(`Date: ${formattedDate} Time: ${formattedTime}`, 105, 30, { align: "center" });
     
-    // Add delivery information
+    // Add delivery information on the same line - moved up since logo was removed
     doc.setFontSize(12);
-    doc.text(`From: ${from}`, 20, 50);
-    doc.text(`To: ${to}`, 20, 57);
+    doc.text(`From: ${from}`, 20, 40);
+    doc.text(`To: ${to}`, 105, 40);
     
     // Add items table
     const tableColumn = ["Supplier", "Stock Code", "Mass (kg)", "Date", "Type"];
@@ -393,9 +386,9 @@ function generateDeliveryNotePDF(dispatcher, receiver, from, to) {
     doc.autoTable({
         head: [tableColumn],
         body: tableRows,
-        startY: 80,
+        startY: 50,
         theme: 'grid',
-        styles: { fontSize: 10, cellPadding: 5 },
+        styles: { fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
         columnStyles: {
             0: { cellWidth: 35 },
@@ -404,7 +397,13 @@ function generateDeliveryNotePDF(dispatcher, receiver, from, to) {
             3: { cellWidth: 30 },
             4: { cellWidth: 30 }
         },
-        margin: { left: 20, right: 20 }
+        margin: { left: 20, right: 20 },
+        didDrawPage: function(data) {
+            // Ensure content fits on one page
+            if (data.pageCount > 1) {
+                doc.deletePage(2);
+            }
+        }
     });
     
     // Get the final Y position after the table
@@ -434,13 +433,21 @@ function generateDeliveryNotePDF(dispatcher, receiver, from, to) {
         body: summaryRows,
         startY: finalY + 5,
         theme: 'grid',
-        styles: { fontSize: 10, cellPadding: 5 },
+        styles: { fontSize: 9, cellPadding: 2 },
         headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
         columnStyles: {
             0: { cellWidth: 80 },
             1: { cellWidth: 80, halign: 'right' }
         },
-        margin: { left: 20, right: 20 }
+        margin: { left: 20, right: 20 },
+        willDrawPage: function(data) {
+            // Ensure the summary table fits on the same page
+            if (data.pageCount > 1) {
+                // Reduce font size further if needed
+                this.styles.fontSize = 8;
+                this.styles.cellPadding = 1;
+            }
+        }
     });
     
     // Add total stock delivered in a box
@@ -459,7 +466,7 @@ function generateDeliveryNotePDF(dispatcher, receiver, from, to) {
     
     doc.setFontSize(18);
     doc.setTextColor(38, 182, 165); // Teal color
-    doc.text(`${totalMass.toFixed(2)} kg`, 105, summaryFinalY + 10, { align: "center" });
+    doc.text(`${Math.round(totalMass)} kg`, 105, summaryFinalY + 10, { align: "center" });
     
     // Add dispatcher and receiver information at the bottom
     const signaturesY = summaryFinalY + 40;
@@ -479,8 +486,9 @@ function generateDeliveryNotePDF(dispatcher, receiver, from, to) {
     doc.text(receiver, 150, signaturesY + 10);
     
     // Save the PDF
-    console.log('Saving PDF with filename:', `Delivery_Note_${dateString}_${totalMass}kgs.pdf`);
-    const filename = `Delivery_Note_${dateString}_${totalMass}kgs.pdf`;
+    const roundedTotalMass = Math.round(totalMass);
+    console.log('Saving PDF with filename:', `Delivery_Note_${dateString}_${roundedTotalMass}kgs.pdf`);
+    const filename = `Delivery_Note_${dateString}_${roundedTotalMass}kgs.pdf`;
     doc.save(filename);
     console.log('PDF saved successfully');
     } catch (error) {
