@@ -271,6 +271,57 @@ table tr:hover {
     min-width: 200px;
 }
 
+/* Scan Result Popup Styles */
+.scan-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    text-align: center;
+    min-width: 300px;
+    max-width: 90%;
+    animation: fadeInOut 3s forwards;
+}
+
+.scan-popup.success {
+    border-left: 5px solid #26B6A5;
+}
+
+.scan-popup.error {
+    border-left: 5px solid #e74c3c;
+}
+
+.scan-popup h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+.scan-popup p {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+
+.scan-popup.success h3 {
+    color: #26B6A5;
+}
+
+.scan-popup.error h3 {
+    color: #e74c3c;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -60%); }
+    10% { opacity: 1; transform: translate(-50%, -50%); }
+    80% { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -50%); }
+}
+
 /* Responsive adjustments */
 @media (min-width: 768px) {
     .container {

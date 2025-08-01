@@ -81,8 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
         addItemToList(newItem);
         manualEntryForm.reset();
         
-        // Show success message
-        alert('Item added successfully!');
+        // Show success message using the popup
+        showPopupMessage(`Successfully added: ${stockCode}`, 'success');
         
         // Switch to list tab
         document.querySelector('[data-tab="list"]').click();
@@ -147,7 +147,7 @@ function onScanSuccess(decodedText, decodedResult) {
     
     // Check if 3 seconds have passed since the last scan
     if (currentTime - lastScanTime < 3000) {
-        scanResultElement.innerHTML = '<p>Please wait 3 seconds between scans</p>';
+        showPopupMessage('Please wait 3 seconds between scans', 'error');
         return;
     }
     
@@ -171,7 +171,7 @@ function onScanSuccess(decodedText, decodedResult) {
         const isDuplicate = scannedItems.some(item => item.uuid === scannedData.uuid);
         
         if (isDuplicate) {
-            scanResultElement.innerHTML = '<p style="color: red;">This item has already been scanned!</p>';
+            showPopupMessage('This item has already been scanned!', 'error');
         } else {
             // Ensure the date is in a format that can be parsed correctly
         // Store the date in its original format if it's already dd/mm/yyyy
@@ -202,11 +202,47 @@ function onScanSuccess(decodedText, decodedResult) {
         
         // Add the scanned item to our list
         addItemToList(scannedData);
-        scanResultElement.innerHTML = `<p style="color: green;">Successfully scanned: ${scannedData.stockCode}</p>`;
+        showPopupMessage(`Successfully scanned: ${scannedData.stockCode}`, 'success');
         }
     } catch (error) {
-        scanResultElement.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        showPopupMessage(`Error: ${error.message}`, 'error');
     }
+}
+
+// Function to show popup messages
+function showPopupMessage(message, type) {
+    // Remove any existing popups
+    const existingPopup = document.querySelector('.scan-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+    
+    // Create popup element
+    const popup = document.createElement('div');
+    popup.className = `scan-popup ${type}`;
+    
+    // Add content based on type
+    if (type === 'success') {
+        popup.innerHTML = `
+            <h3>Success!</h3>
+            <p>${message}</p>
+        `;
+    } else {
+        popup.innerHTML = `
+            <h3>Alert</h3>
+            <p>${message}</p>
+        `;
+    }
+    
+    // Add to document
+    document.body.appendChild(popup);
+    
+    // Remove popup after animation completes
+    setTimeout(() => {
+        if (popup && popup.parentNode) {
+            popup.parentNode.removeChild(popup);
+        }
+    }, 3000);
 }
 
 // Handle QR scan failure
@@ -254,9 +290,13 @@ function updateItemsTable() {
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.addEventListener('click', (e) => {
             const index = parseInt(e.target.getAttribute('data-index'));
+            const deletedItem = scannedItems[index];
             scannedItems.splice(index, 1);
             updateItemsTable();
             updateTotalMass();
+            
+            // Show deletion confirmation popup
+            showPopupMessage(`Item ${deletedItem.stockCode} removed from list`, 'error');
         });
     });
 }
