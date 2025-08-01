@@ -174,19 +174,29 @@ function onScanSuccess(decodedText, decodedResult) {
             scanResultElement.innerHTML = '<p style="color: red;">This item has already been scanned!</p>';
         } else {
             // Ensure the date is in a format that can be parsed correctly
-        // If the date is not in ISO format, try to standardize it
+        // Store the date in its original format if it's already dd/mm/yyyy
         if (scannedData.date && typeof scannedData.date === 'string') {
-            // If it's already in dd/mm/yyyy format, convert to ISO
+            console.log('Original date from QR:', scannedData.date);
+            
+            // If it's in dd/mm/yyyy format, keep it as is
             if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(scannedData.date)) {
+                // Validate the date parts
                 const parts = scannedData.date.split('/');
                 const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+                const month = parseInt(parts[1], 10);
                 const year = parseInt(parts[2], 10);
-                const isoDate = new Date(year, month, day);
-                if (!isNaN(isoDate.getTime())) {
-                    scannedData.date = isoDate.toISOString().split('T')[0];
-                    console.log('Converted date to ISO format:', scannedData.date);
+                
+                // Ensure day and month are valid
+                if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+                    // Keep the original dd/mm/yyyy format
+                    console.log('Keeping original dd/mm/yyyy format:', scannedData.date);
+                } else {
+                    console.log('Invalid date parts in dd/mm/yyyy format');
                 }
+            }
+            // If it's in ISO format (yyyy-mm-dd), keep it as is
+            else if (/^\d{4}-\d{2}-\d{2}/.test(scannedData.date)) {
+                console.log('Date is already in ISO format:', scannedData.date);
             }
         }
         
@@ -275,37 +285,43 @@ function formatDate(dateString) {
     console.log('formatDate input:', dateString, 'Type:', typeof dateString);
     
     try {
-        // First try to parse as ISO date
-        const date = new Date(dateString);
-        console.log('Parsed date object:', date, 'Valid:', !isNaN(date.getTime()));
-        
-        // Check if date is valid
-        if (isNaN(date.getTime())) {
-            // If date is invalid, try to parse common formats
-            // Check if it's in dd/mm/yyyy format
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
-                const parts = dateString.split('/');
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1;
-                const year = parseInt(parts[2], 10);
-                const parsedDate = new Date(year, month, day);
-                
-                if (!isNaN(parsedDate.getTime())) {
-                    const formattedDay = day.toString().padStart(2, '0');
-                    const formattedMonth = (month + 1).toString().padStart(2, '0');
-                    return `${formattedDay}/${formattedMonth}/${year}`;
-                }
-            }
+        // Check if it's already in dd/mm/yyyy format
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
+            const parts = dateString.split('/');
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
             
-            // Return the original string if we can't parse it
-            return dateString;
+            // Validate the date parts
+            if (day >= 1 && day <= 31 && month >= 0 && month <= 11) {
+                const formattedDay = day.toString().padStart(2, '0');
+                const formattedMonth = (month + 1).toString().padStart(2, '0');
+                return `${formattedDay}/${formattedMonth}/${year}`;
+            }
         }
         
-        // Format the valid date
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
+        // Try to parse as ISO date (yyyy-mm-dd)
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+            const [year, month, day] = dateString.split('T')[0].split('-').map(num => parseInt(num, 10));
+            if (year && month && day) {
+                const formattedDay = day.toString().padStart(2, '0');
+                const formattedMonth = month.toString().padStart(2, '0');
+                return `${formattedDay}/${formattedMonth}/${year}`;
+            }
+        }
+        
+        // As a last resort, try JavaScript's Date parsing
+        // But be careful with the format interpretation
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Return the original string if we can't parse it
+        return dateString;
     } catch (error) {
         console.error("Error formatting date:", error);
         return dateString; // Return the original string on error
